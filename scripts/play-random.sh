@@ -8,7 +8,7 @@
 set -euo pipefail
 
 CATEGORY="${1:-done}"
-SOUNDS_DIR="${CLAUDE_VIBES_DIR:-$HOME/.claude-vibes}/sounds/$CATEGORY"
+SOUNDS_DIR="${CLAUDE_VIBES_DIR:-$HOME/.claude/vibes}/sounds/$CATEGORY"
 
 if [ ! -d "$SOUNDS_DIR" ]; then
   exit 0

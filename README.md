@@ -21,10 +21,17 @@ Sounds are pre-generated with OpenAI TTS (fable voice -- British male). A random
 
 ## Quick start
 
+One command:
+
+```bash
+curl -fsSL https://deepvista-ai.github.io/claude-vibes/install.sh | bash
+```
+
+Or clone and install manually:
+
 ```bash
 git clone https://github.com/DeepVista-AI/claude-vibes.git
 cd claude-vibes
-chmod +x install.sh
 ./install.sh
 ```
 
@@ -136,7 +143,7 @@ The hook configuration goes into `~/.claude/settings.json`:
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude-vibes/scripts/play-random.sh done"
+            "command": "~/.claude/vibes/scripts/play-random.sh done"
           }
         ]
       }
@@ -146,7 +153,7 @@ The hook configuration goes into `~/.claude/settings.json`:
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude-vibes/scripts/play-random.sh permission"
+            "command": "~/.claude/vibes/scripts/play-random.sh permission"
           }
         ]
       }
@@ -171,7 +178,7 @@ The hook configuration goes into `~/.claude/settings.json`:
 ./uninstall.sh
 ```
 
-Removes `~/.claude-vibes/` and cleans hooks from `~/.claude/settings.json`.
+Removes `~/.claude/vibes/` and cleans hooks from `~/.claude/settings.json`.
 
 ## Requirements
 

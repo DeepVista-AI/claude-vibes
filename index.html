@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>claude-vibes - Voice notifications for Claude Code</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07090d;
+    --card: rgba(255,255,255,0.03);
+    --card-hover: rgba(255,255,255,0.06);
+    --border: rgba(255,255,255,0.08);
+    --border-hover: rgba(255,255,255,0.15);
+    --text: #f0f2f5;
+    --muted: #6b7280;
+    --done: #34d399;
+    --done-glow: rgba(52,211,153,0.15);
+    --perm: #fbbf24;
+    --perm-glow: rgba(251,191,36,0.15);
+    --error: #f87171;
+    --error-glow: rgba(248,113,113,0.15);
+    --gradient-1: #6366f1;
+    --gradient-2: #a855f7;
+    --gradient-3: #ec4899;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated gradient background orbs */
+  .bg-glow {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.12;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .bg-glow-1 {
+    width: 600px; height: 600px;
+    top: -200px; left: -100px;
+    background: var(--gradient-1);
+    animation: float1 20s ease-in-out infinite;
+  }
+  .bg-glow-2 {
+    width: 500px; height: 500px;
+    top: 40%; right: -150px;
+    background: var(--gradient-2);
+    animation: float2 25s ease-in-out infinite;
+  }
+  .bg-glow-3 {
+    width: 400px; height: 400px;
+    bottom: -100px; left: 30%;
+    background: var(--gradient-3);
+    animation: float3 22s ease-in-out infinite;
+  }
+
+  @keyframes float1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(80px, 60px) scale(1.1); }
+    66% { transform: translate(-40px, 30px) scale(0.95); }
+  }
+  @keyframes float2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(-60px, -40px) scale(1.05); }
+    66% { transform: translate(40px, 60px) scale(0.9); }
+  }
+  @keyframes float3 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(50px, -50px) scale(1.08); }
+    66% { transform: translate(-70px, 20px) scale(0.92); }
+  }
+
+  /* Noise texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    opacity: 0.015;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 4rem 1.5rem 5rem;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .logo-wave {
+    display: inline-block;
+    width: 48px;
+    height: 48px;
+  }
+
+  .logo-wave .bar {
+    fill: url(#logo-grad);
+    animation: eq 1.2s ease-in-out infinite;
+  }
+  .logo-wave .bar:nth-child(2) { animation-delay: 0.15s; }
+  .logo-wave .bar:nth-child(3) { animation-delay: 0.3s; }
+  .logo-wave .bar:nth-child(4) { animation-delay: 0.45s; }
+  .logo-wave .bar:nth-child(5) { animation-delay: 0.6s; }
+
+  @keyframes eq {
+    0%, 100% { transform: scaleY(0.3); }
+    50% { transform: scaleY(1); }
+  }
+
+  h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2), var(--gradient-3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .tagline {
+    color: var(--muted);
+    font-size: 1.15rem;
+    margin-bottom: 2rem;
+    font-weight: 400;
+  }
+
+  .install-wrapper {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .install-block {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.85rem 1.25rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(20px);
+  }
+
+  .install-block::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(168,85,247,0.1));
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .install-block:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  }
+  .install-block:hover::before { opacity: 1; }
+  .install-block code { color: var(--text); position: relative; }
+
+  .install-hint {
+    font-size: 0.75rem;
+    color: var(--muted);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .install-wrapper:hover .install-hint { opacity: 1; }
+
+  /* GitHub star */
+  .gh-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    padding: 0.55rem 1.2rem;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.3s;
+    backdrop-filter: blur(20px);
+    background: var(--card);
+  }
+  .gh-link:hover {
+    border-color: var(--border-hover);
+    background: var(--card-hover);
+    transform: translateY(-1px);
+  }
+  .gh-link svg { width: 18px; height: 18px; fill: var(--text); }
+
+  /* Stats */
+  .stats {
+    display: flex;
+    justify-content: center;
+    gap: 2.5rem;
+    margin-bottom: 3.5rem;
+  }
+  .stat {
+    text-align: center;
+  }
+  .stat-num {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .stat-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+  }
+
+  /* Tabs */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .tabs-wrapper {
+    animation: fadeUp 0.6s ease-out backwards;
+  }
+
+  .tabs-bar {
+    display: flex;
+    gap: 0.35rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 0.3rem;
+    margin-bottom: 1.25rem;
+    backdrop-filter: blur(10px);
+  }
+
+  .tab-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1rem;
+    border: none;
+    border-radius: 11px;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+  }
+
+  .tab-btn:hover {
+    color: var(--text);
+    background: rgba(255,255,255,0.04);
+  }
+
+  .tab-btn.active {
+    color: var(--text);
+    background: rgba(255,255,255,0.08);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+  }
+
+  .tab-btn[data-tab="done"].active {
+    background: var(--done-glow);
+    color: var(--done);
+    box-shadow: 0 2px 20px var(--done-glow);
+  }
+  .tab-btn[data-tab="permission"].active {
+    background: var(--perm-glow);
+    color: var(--perm);
+    box-shadow: 0 2px 20px var(--perm-glow);
+  }
+  .tab-btn[data-tab="error"].active {
+    background: var(--error-glow);
+    color: var(--error);
+    box-shadow: 0 2px 20px var(--error-glow);
+  }
+
+  .tab-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .tab-btn[data-tab="done"] .tab-dot { background: var(--done); }
+  .tab-btn[data-tab="permission"] .tab-dot { background: var(--perm); }
+  .tab-btn[data-tab="error"] .tab-dot { background: var(--error); }
+
+  .tab-count {
+    font-size: 0.7rem;
+    opacity: 0.6;
+    font-weight: 400;
+  }
+
+  .tab-panel {
+    display: none;
+  }
+  .tab-panel.active {
+    display: block;
+    animation: tabFadeIn 0.3s ease-out;
+  }
+
+  @keyframes tabFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .sound-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .sound-item {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.7rem 1rem;
+    transition: all 0.25s ease;
+    backdrop-filter: blur(10px);
+    cursor: default;
+  }
+
+  .sound-item:hover {
+    border-color: var(--border-hover);
+    background: var(--card-hover);
+    transform: translateX(4px);
+  }
+
+  .category-done .sound-item.playing {
+    background: var(--done-glow);
+    border-color: var(--done);
+    box-shadow: 0 0 30px var(--done-glow), inset 0 0 30px var(--done-glow);
+  }
+  .category-perm .sound-item.playing {
+    background: var(--perm-glow);
+    border-color: var(--perm);
+    box-shadow: 0 0 30px var(--perm-glow), inset 0 0 30px var(--perm-glow);
+  }
+  .category-error .sound-item.playing {
+    background: var(--error-glow);
+    border-color: var(--error);
+    box-shadow: 0 0 30px var(--error-glow), inset 0 0 30px var(--error-glow);
+  }
+
+  .play-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+    position: relative;
+  }
+
+  .play-btn::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 14px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .play-btn:hover { transform: scale(1.1); }
+  .play-btn:active { transform: scale(0.95); }
+  .play-btn:hover::before { opacity: 1; }
+
+  .category-done .play-btn {
+    background: linear-gradient(135deg, #34d399, #10b981);
+    box-shadow: 0 4px 15px rgba(52,211,153,0.3);
+  }
+  .category-done .play-btn::before { background: linear-gradient(135deg, #34d399, #10b981); filter: blur(8px); }
+  .category-perm .play-btn {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    box-shadow: 0 4px 15px rgba(251,191,36,0.3);
+  }
+  .category-perm .play-btn::before { background: linear-gradient(135deg, #fbbf24, #f59e0b); filter: blur(8px); }
+  .category-error .play-btn {
+    background: linear-gradient(135deg, #f87171, #ef4444);
+    box-shadow: 0 4px 15px rgba(248,113,113,0.3);
+  }
+  .category-error .play-btn::before { background: linear-gradient(135deg, #f87171, #ef4444); filter: blur(8px); }
+
+  .play-btn svg { fill: var(--bg); width: 16px; height: 16px; position: relative; z-index: 1; }
+
+  /* Waveform animation for playing state */
+  .sound-item.playing .play-btn .eq-bars { display: flex; }
+  .sound-item.playing .play-btn .play-icon { display: none; }
+  .sound-item:not(.playing) .play-btn .eq-bars { display: none; }
+
+  .eq-bars {
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    height: 16px;
+    position: relative;
+    z-index: 1;
+  }
+  .eq-bar {
+    width: 3px;
+    background: var(--bg);
+    border-radius: 2px;
+    animation: eqbar 0.8s ease-in-out infinite;
+  }
+  .eq-bar:nth-child(1) { height: 60%; animation-delay: 0s; }
+  .eq-bar:nth-child(2) { height: 100%; animation-delay: 0.15s; }
+  .eq-bar:nth-child(3) { height: 40%; animation-delay: 0.3s; }
+  .eq-bar:nth-child(4) { height: 80%; animation-delay: 0.45s; }
+
+  @keyframes eqbar {
+    0%, 100% { transform: scaleY(0.4); }
+    50% { transform: scaleY(1); }
+  }
+
+  .sound-phrase {
+    font-size: 0.95rem;
+    flex: 1;
+    font-weight: 450;
+  }
+
+  .sound-name {
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-family: 'JetBrains Mono', monospace;
+    flex-shrink: 0;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+  }
+  .sound-item:hover .sound-name { opacity: 1; }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    margin-top: 4rem;
+    padding-top: 2.5rem;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+
+  footer a {
+    color: var(--text);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  footer a:hover { color: var(--gradient-2); }
+
+  .footer-brand {
+    font-weight: 600;
+    background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--card);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    padding: 0.65rem 1.2rem;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    color: var(--text);
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    z-index: 100;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* How it works */
+  .how-section {
+    margin-bottom: 4rem;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+    text-align: center;
+  }
+
+  .section-subtitle {
+    color: var(--muted);
+    font-size: 0.95rem;
+    text-align: center;
+    margin-bottom: 2rem;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .how-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .how-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem 1.25rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .how-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(99,102,241,0.06), rgba(168,85,247,0.06));
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .how-card:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+  }
+  .how-card:hover::before { opacity: 1; }
+
+  .how-num {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
+    color: white;
+    position: relative;
+  }
+
+  .how-card h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    position: relative;
+  }
+
+  .how-card p {
+    font-size: 0.82rem;
+    color: var(--muted);
+    line-height: 1.5;
+    position: relative;
+  }
+
+  .how-card code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    background: rgba(255,255,255,0.06);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    color: var(--gradient-2);
+  }
+
+  /* Flow diagram */
+  .flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .flow-node {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    backdrop-filter: blur(10px);
+    white-space: nowrap;
+  }
+
+  .flow-arrow {
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  .flow-node.highlight {
+    border-color: var(--gradient-2);
+    background: rgba(168,85,247,0.1);
+    color: var(--gradient-2);
+  }
+
+  /* Customize section */
+  .customize-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+
+  .customize-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem 1.25rem;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .customize-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(99,102,241,0.06), rgba(236,72,153,0.06));
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .customize-card:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  }
+  .customize-card:hover::before { opacity: 1; }
+
+  .customize-card .card-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+    position: relative;
+  }
+
+  .customize-card h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+    position: relative;
+  }
+
+  .customize-card p {
+    font-size: 0.82rem;
+    color: var(--muted);
+    line-height: 1.5;
+    position: relative;
+  }
+
+  .customize-card .card-code {
+    margin-top: 0.75rem;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    position: relative;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  .customize-card .card-code .cmd { color: var(--gradient-2); }
+  .customize-card .card-code .str { color: var(--done); }
+  .customize-card .card-code .comment { opacity: 0.4; }
+
+  @media (max-width: 600px) {
+    .how-grid { grid-template-columns: 1fr; }
+    .customize-grid { grid-template-columns: 1fr; }
+    .flow { gap: 0.4rem; }
+    .flow-node { font-size: 0.7rem; padding: 0.4rem 0.7rem; }
+  }
+
+  @media (max-width: 600px) {
+    .container { padding: 2.5rem 1rem; }
+    h1 { font-size: 2rem; }
+    .stats { gap: 1.5rem; }
+    .stat-num { font-size: 1.5rem; }
+    .sound-name { display: none; }
+    .install-block { font-size: 0.7rem; padding: 0.7rem 1rem; }
+    .bg-glow { opacity: 0.08; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-glow bg-glow-1"></div>
+<div class="bg-glow bg-glow-2"></div>
+<div class="bg-glow bg-glow-3"></div>
+
+<div class="container">
+  <header>
+    <div class="logo">
+      <svg class="logo-wave" viewBox="0 0 48 48">
+        <defs>
+          <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#6366f1"/>
+            <stop offset="50%" stop-color="#a855f7"/>
+            <stop offset="100%" stop-color="#ec4899"/>
+          </linearGradient>
+        </defs>
+        <rect class="bar" x="4" y="10" width="5" height="28" rx="2.5" transform-origin="6.5px 24px"/>
+        <rect class="bar" x="13" y="6" width="5" height="36" rx="2.5" transform-origin="15.5px 24px"/>
+        <rect class="bar" x="22" y="14" width="5" height="20" rx="2.5" transform-origin="24.5px 24px"/>
+        <rect class="bar" x="31" y="8" width="5" height="32" rx="2.5" transform-origin="33.5px 24px"/>
+        <rect class="bar" x="40" y="12" width="5" height="24" rx="2.5" transform-origin="42.5px 24px"/>
+      </svg>
+    </div>
+    <h1>claude-vibes</h1>
+    <p class="tagline">Witty British voice notifications for Claude Code</p>
+
+    <div class="install-wrapper">
+      <div class="install-block" onclick="copyInstall()" title="Click to copy">
+        <code>curl -fsSL https://deepvista-ai.github.io/claude-vibes/install.sh | bash</code>
+      </div>
+      <span class="install-hint">click to copy</span>
+    </div>
+
+    <div style="margin-top:1rem">
+      <a class="gh-link" href="https://github.com/DeepVista-AI/claude-vibes" target="_blank">
+        <svg viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        Star on GitHub
+      </a>
+    </div>
+  </header>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num">26</div>
+      <div class="stat-label">Sounds</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">3</div>
+      <div class="stat-label">Categories</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">1</div>
+      <div class="stat-label">Command</div>
+    </div>
+  </div>
+
+  <div class="how-section">
+    <h2 class="section-title">How it works</h2>
+    <p class="section-subtitle">Claude Code fires lifecycle hooks as it works. claude-vibes listens and plays a random voice clip for each event.</p>
+
+    <div class="how-grid">
+      <div class="how-card">
+        <div class="how-num">1</div>
+        <h3>Install</h3>
+        <p>One command copies 26 sound files to <code>~/.claude/vibes</code> and registers hooks in Claude Code's <code>settings.json</code>.</p>
+      </div>
+      <div class="how-card">
+        <div class="how-num">2</div>
+        <h3>Hook</h3>
+        <p>Claude Code fires <code>Stop</code>, <code>PermissionRequest</code>, and <code>Notification</code> events as it works.</p>
+      </div>
+      <div class="how-card">
+        <div class="how-num">3</div>
+        <h3>Play</h3>
+        <p>Each hook triggers a script that picks a random <code>.mp3</code> from the matching category and plays it with <code>afplay</code>.</p>
+      </div>
+    </div>
+
+    <div class="flow">
+      <span class="flow-node">Claude Code</span>
+      <span class="flow-arrow">&rarr;</span>
+      <span class="flow-node">Hook event</span>
+      <span class="flow-arrow">&rarr;</span>
+      <span class="flow-node highlight">play-random.sh</span>
+      <span class="flow-arrow">&rarr;</span>
+      <span class="flow-node">Random voice clip</span>
+    </div>
+  </div>
+
+  <h2 class="section-title" style="margin-bottom:1.5rem">Sound Library</h2>
+
+  <div class="tabs-wrapper">
+    <div class="tabs-bar">
+      <button class="tab-btn active" data-tab="done" onclick="switchTab('done')">
+        <span class="tab-dot"></span>
+        Task Complete
+        <span class="tab-count">15</span>
+      </button>
+      <button class="tab-btn" data-tab="permission" onclick="switchTab('permission')">
+        <span class="tab-dot"></span>
+        Permission
+        <span class="tab-count">6</span>
+      </button>
+      <button class="tab-btn" data-tab="error" onclick="switchTab('error')">
+        <span class="tab-dot"></span>
+        Error
+        <span class="tab-count">5</span>
+      </button>
+    </div>
+
+    <div class="tab-panel active category-done" id="panel-done">
+      <div class="sound-list" id="done-list"></div>
+    </div>
+    <div class="tab-panel category-perm" id="panel-permission">
+      <div class="sound-list" id="perm-list"></div>
+    </div>
+    <div class="tab-panel category-error" id="panel-error">
+      <div class="sound-list" id="error-list"></div>
+    </div>
+  </div>
+
+  <div class="how-section" style="margin-top:4rem">
+    <h2 class="section-title">Customize</h2>
+    <p class="section-subtitle">Regenerate all sounds with a different voice, or speak any phrase on the fly.</p>
+
+    <div class="customize-grid">
+      <div class="customize-card">
+        <div class="card-icon">&#127908;</div>
+        <h3>Regenerate Sounds</h3>
+        <p>Regenerate all 26 clips with a different OpenAI TTS voice. Choose from alloy, echo, fable, nova, onyx, or shimmer.</p>
+        <div class="card-code"><span class="comment"># Change voice to nova</span>
+<span class="cmd">./scripts/generate-sounds.sh</span> <span class="str">nova</span></div>
+      </div>
+      <div class="customize-card">
+        <div class="card-icon">&#128172;</div>
+        <h3>Live Speak</h3>
+        <p>Generate and play any phrase instantly. Great for testing custom messages or one-off celebrations.</p>
+        <div class="card-code"><span class="cmd">./scripts/live-speak.sh</span> <span class="str">"Deploy done. Champagne time."</span></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>
+      Made by <a href="https://github.com/xianminx/" class="footer-brand">Lucas</a>@<a href="https://github.com/DeepVista-AI" class="footer-brand">DeepVista AI</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://github.com/DeepVista-AI/claude-vibes">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      MIT License
+    </p>
+    <p style="margin-top:0.5rem; opacity:0.6">Voice: OpenAI TTS (fable)</p>
+  </footer>
+</div>
+
+<div class="toast" id="toast">Copied to clipboard</div>
+
+<script>
+const sounds = {
+  done: [
+    { file: "done_boss",          phrase: "All done, boss." },
+    { file: "done_mission",       phrase: "Mission accomplished." },
+    { file: "done_easy",          phrase: "Too easy. Next challenge please." },
+    { file: "done_chef",          phrase: "Chef's kiss. It is done." },
+    { file: "done_magic",         phrase: "And just like magic... it works." },
+    { file: "done_ship",          phrase: "Ship it. We are golden." },
+    { file: "done_nailed",        phrase: "Nailed it. You are welcome." },
+    { file: "done_mic",           phrase: "Mic drop. Task complete." },
+    { file: "done_tea",           phrase: "Done and dusted. Fancy a tea?" },
+    { file: "done_legend",        phrase: "Finished. You absolute legend." },
+    { file: "done_brilliant",     phrase: "Brilliant. All sorted." },
+    { file: "done_piece_of_cake", phrase: "Piece of cake." },
+    { file: "done_butler",        phrase: "Your task has been attended to, sir." },
+    { file: "done_boom",          phrase: "Boom. Done." },
+    { file: "done_smooth",        phrase: "Smooth as butter. All finished." },
+  ],
+  permission: [
+    { file: "perm_excuse", phrase: "Excuse me, may I?" },
+    { file: "perm_boss",   phrase: "Boss, I need your approval." },
+    { file: "perm_knock",  phrase: "Knock knock. Permission please." },
+    { file: "perm_pretty", phrase: "Pretty please?" },
+    { file: "perm_pardon", phrase: "Pardon the interruption. I need a green light." },
+    { file: "perm_ahem",   phrase: "Ahem. Quick approval needed." },
+  ],
+  error: [
+    { file: "error_oops",       phrase: "Oops. We have a situation." },
+    { file: "error_awkward",    phrase: "Well, this is awkward." },
+    { file: "error_tea",        phrase: "Houston, we have a problem. Time for tea." },
+    { file: "error_plot_twist", phrase: "Plot twist. Something went wrong." },
+    { file: "error_not_ideal",  phrase: "Not ideal. We hit a snag." },
+  ],
+};
+
+const categoryMap = { done: "done", permission: "permission", error: "error" };
+const listMap = { done: "done-list", permission: "perm-list", error: "error-list" };
+
+const playIconSVG = `<svg class="play-icon" viewBox="0 0 16 16"><path d="M4 2l10 6-10 6z"/></svg>
+  <div class="eq-bars"><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div></div>`;
+
+let currentAudio = null;
+let currentItem = null;
+
+function playSound(category, file, item) {
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+    if (currentItem) currentItem.classList.remove("playing");
+  }
+
+  if (currentItem === item) {
+    currentAudio = null;
+    currentItem = null;
+    return;
+  }
+
+  const audio = new Audio(`sounds/${category}/${file}.mp3`);
+  currentAudio = audio;
+  currentItem = item;
+  item.classList.add("playing");
+
+  audio.play();
+  audio.onended = () => {
+    item.classList.remove("playing");
+    currentAudio = null;
+    currentItem = null;
+  };
+}
+
+function render() {
+  for (const [cat, items] of Object.entries(sounds)) {
+    const list = document.getElementById(listMap[cat]);
+    for (const s of items) {
+      const item = document.createElement("div");
+      item.className = "sound-item";
+
+      const btn = document.createElement("button");
+      btn.className = "play-btn";
+      btn.innerHTML = playIconSVG;
+      btn.setAttribute("aria-label", `Play: ${s.phrase}`);
+
+      btn.onclick = () => playSound(categoryMap[cat], s.file, item);
+
+      const phrase = document.createElement("span");
+      phrase.className = "sound-phrase";
+      phrase.textContent = `\u201C${s.phrase}\u201D`;
+
+      const name = document.createElement("span");
+      name.className = "sound-name";
+      name.textContent = s.file;
+
+      item.append(btn, phrase, name);
+      list.appendChild(item);
+    }
+  }
+}
+
+function switchTab(tab) {
+  // Stop any playing audio
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+    if (currentItem) currentItem.classList.remove("playing");
+    currentAudio = null;
+    currentItem = null;
+  }
+
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.tab-btn[data-tab="${tab}"]`).classList.add('active');
+  document.getElementById(`panel-${tab}`).classList.add('active');
+}
+
+function copyInstall() {
+  navigator.clipboard.writeText("curl -fsSL https://deepvista-ai.github.io/claude-vibes/install.sh | bash");
+  const toast = document.getElementById("toast");
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 2000);
+}
+
+// Intersection observer for scroll animations
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) e.target.style.animationPlayState = 'running';
+  });
+}, { threshold: 0.1 });
+
+render();
+
+document.querySelectorAll('.tabs-wrapper, .how-section').forEach(el => {
+  observer.observe(el);
+});
+</script>
+</body>
+</html>

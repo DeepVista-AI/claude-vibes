@@ -2,3 +2,4 @@
 *.swp
 *.swo
 /tmp/
+settings.local.json

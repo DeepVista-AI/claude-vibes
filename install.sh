@@ -7,13 +7,22 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-INSTALL_DIR="$HOME/.claude-vibes"
+INSTALL_DIR="$HOME/.claude/vibes"
 SETTINGS_FILE="$HOME/.claude/settings.json"
 DRY_RUN=false
 
 if [[ "${1:-}" == "--dry" ]]; then
   DRY_RUN=true
+fi
+
+# If sounds dir doesn't exist next to this script, we're running via curl — clone first
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
+if [ ! -d "$SCRIPT_DIR/sounds" ]; then
+  TMPDIR=$(mktemp -d)
+  trap 'rm -rf "$TMPDIR"' EXIT
+  echo -e "${BOLD:-}  Downloading claude-vibes...${NC:-}"
+  git clone --depth 1 https://github.com/DeepVista-AI/claude-vibes.git "$TMPDIR/claude-vibes" 2>/dev/null
+  SCRIPT_DIR="$TMPDIR/claude-vibes"
 fi
 
 # Colors

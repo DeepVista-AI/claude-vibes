@@ -2,7 +2,7 @@
 # Uninstall claude-vibes: remove sounds and hooks
 set -euo pipefail
 
-INSTALL_DIR="$HOME/.claude-vibes"
+INSTALL_DIR="$HOME/.claude/vibes"
 SETTINGS_FILE="$HOME/.claude/settings.json"
 
 GREEN='\033[0;32m'

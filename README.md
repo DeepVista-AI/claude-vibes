@@ -17,6 +17,8 @@ Give your [Claude Code](https://docs.anthropic.com/en/docs/claude-code) a voice.
 | **Error** | Cheeky alert: *"Well, this is awkward."*, *"Houston, we have a problem."* |
 | **Notification** | Clean glass chime (macOS system sound) |
 
+Every event also **flashes your terminal tab** and sends a **macOS notification with the project name**, so you always know which Claude Code instance needs attention.
+
 Sounds are pre-generated with OpenAI TTS (fable voice -- British male). A random sound plays each time, so it never gets repetitive.
 
 ## Quick start
@@ -47,6 +49,7 @@ claude-vibes/
     error/         #  5 error notification sounds
   scripts/
     play-random.sh       # Pick and play a random sound from a category
+    notify.sh            # Tab flash + macOS notification with project context
     live-speak.sh        # Live-generate any phrase with OpenAI TTS
     generate-sounds.sh   # Regenerate all sounds (change voice, add phrases)
     preview.sh           # Listen to all sounds
@@ -64,6 +67,27 @@ claude-vibes/
 ./scripts/preview.sh done
 ./scripts/preview.sh permission
 ./scripts/preview.sh error
+```
+
+## Multi-instance support
+
+Running Claude Code in multiple terminal tabs? claude-vibes has you covered:
+
+- **Tab flash** -- the tab flashes/badges when Claude needs attention (BEL character, works in iTerm2, Warp, Terminal.app)
+- **macOS notification** -- shows the project name and event type in Notification Center, even when the terminal isn't focused
+- **iTerm2 extras** -- native OSC 9 notification + dock bounce via `RequestAttention`
+
+The project name is auto-detected from your git repo. Override it with:
+
+```bash
+export CLAUDE_VIBES_PROJECT="my-api"
+```
+
+Disable specific features:
+
+```bash
+export CLAUDE_VIBES_FLASH=0    # No tab flash
+export CLAUDE_VIBES_NOTIFY=0   # No macOS notifications
 ```
 
 ## Customize

@@ -71,6 +71,7 @@ fi
 title "Step 2: Configuring Claude Code hooks"
 
 PLAY_SCRIPT="$INSTALL_DIR/scripts/play-random.sh"
+NOTIFY_SCRIPT="$INSTALL_DIR/scripts/notify.sh"
 
 HOOKS_JSON=$(cat <<HOOKEOF
 {
@@ -99,7 +100,7 @@ HOOKS_JSON=$(cat <<HOOKEOF
       "hooks": [
         {
           "type": "command",
-          "command": "afplay /System/Library/Sounds/Glass.aiff &"
+          "command": "afplay /System/Library/Sounds/Glass.aiff & $NOTIFY_SCRIPT notification &"
         }
       ]
     }
@@ -149,6 +150,8 @@ info "Your Claude Code will now:"
 echo "    - Play a random voice when a task is done"
 echo "    - Play a random voice when permission is needed"
 echo "    - Chime on notifications"
+echo "    - Flash the terminal tab when attention is needed"
+echo "    - Send macOS notifications with project name"
 echo ""
 step "Preview all sounds:  $INSTALL_DIR/scripts/preview.sh"
 step "Live TTS:            $INSTALL_DIR/scripts/live-speak.sh \"Your message\""

@@ -90,10 +90,38 @@ flash_tab() {
 
 # --- macOS Notification Center ----------------------------------------------
 
+# Map TERM_PROGRAM to macOS bundle id so click-to-focus routes to the terminal
+# instead of Script Editor (osascript's default notification host).
+terminal_bundle_id() {
+  case "${TERM_PROGRAM:-}" in
+    iTerm.app|iTerm2) echo "com.googlecode.iterm2" ;;
+    WarpTerminal)     echo "dev.warp.Warp-Stable" ;;
+    Apple_Terminal)   echo "com.apple.Terminal" ;;
+    ghostty)          echo "com.mitchellh.ghostty" ;;
+    vscode)           echo "com.microsoft.VSCode" ;;
+    *)                echo "" ;;
+  esac
+}
+
 send_macos_notification() {
   [ "$NOTIFY" = "0" ] && return
 
-  # osascript is available on all macOS systems
+  local sender
+  sender="$(terminal_bundle_id)"
+
+  # Prefer terminal-notifier: click focuses the terminal (not Script Editor).
+  if command -v terminal-notifier &>/dev/null; then
+    terminal-notifier \
+      -title "claude-vibes" \
+      -subtitle "$PROJECT_NAME" \
+      -message "$EVENT_LABEL" \
+      ${sender:+-sender "$sender"} \
+      >/dev/null 2>&1 &
+    return
+  fi
+
+  # Fallback: osascript. Click opens Script Editor — install terminal-notifier
+  # to fix (brew install terminal-notifier).
   if command -v osascript &>/dev/null; then
     osascript -e "display notification \"${EVENT_LABEL}\" with title \"claude-vibes\" subtitle \"${PROJECT_NAME}\"" &>/dev/null &
   fi

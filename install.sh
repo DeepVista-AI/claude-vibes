@@ -66,9 +66,42 @@ else
 fi
 
 # ------------------------------------------------------------------
-# Step 2: Configure Claude Code hooks
+# Step 1.5: Optional terminal-notifier for click-to-focus notifications
 # ------------------------------------------------------------------
-title "Step 2: Configuring Claude Code hooks"
+title "Step 2: Checking notification dependencies"
+
+if command -v terminal-notifier &>/dev/null; then
+  info "terminal-notifier found — click a notification to focus your terminal"
+else
+  warn "terminal-notifier not installed."
+  warn "Without it, clicking a macOS notification opens Script Editor instead of your terminal."
+  if command -v brew &>/dev/null; then
+    if [ "$DRY_RUN" = true ]; then
+      info "Would prompt: brew install terminal-notifier"
+    else
+      printf "  Install terminal-notifier via Homebrew now? [Y/n] "
+      read -r reply </dev/tty || reply="n"
+      case "$reply" in
+        ""|y|Y|yes|YES)
+          brew install terminal-notifier && info "terminal-notifier installed" \
+            || warn "Install failed — falling back to osascript notifications"
+          ;;
+        *)
+          warn "Skipped. Install later with: brew install terminal-notifier"
+          ;;
+      esac
+    fi
+  else
+    warn "Homebrew not found. Install manually:"
+    warn "  brew install terminal-notifier"
+    warn "  (or: https://github.com/julienXX/terminal-notifier)"
+  fi
+fi
+
+# ------------------------------------------------------------------
+# Step 3: Configure Claude Code hooks
+# ------------------------------------------------------------------
+title "Step 3: Configuring Claude Code hooks"
 
 PLAY_SCRIPT="$INSTALL_DIR/scripts/play-random.sh"
 NOTIFY_SCRIPT="$INSTALL_DIR/scripts/notify.sh"

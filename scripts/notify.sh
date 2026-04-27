@@ -110,8 +110,10 @@ send_macos_notification() {
   sender="$(terminal_bundle_id)"
 
   # Prefer terminal-notifier: click focuses the terminal (not Script Editor).
+  # timeout 5: terminal-notifier with -sender stays alive for click callbacks;
+  # 5s is enough for delivery, after which we force-kill it to avoid zombies.
   if command -v terminal-notifier &>/dev/null; then
-    terminal-notifier \
+    timeout 5 terminal-notifier \
       -title "claude-vibes" \
       -subtitle "$PROJECT_NAME" \
       -message "$EVENT_LABEL" \

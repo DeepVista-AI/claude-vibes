@@ -103,19 +103,42 @@ terminal_bundle_id() {
   esac
 }
 
+# Locate Claude.app icon so notifications carry Claude branding via
+# -contentImage (the right-hand thumbnail). Falls back to empty if not
+# installed — terminal-notifier then uses its own icon.
+claude_icon_path() {
+  local p="/Applications/Claude.app/Contents/Resources/electron.icns"
+  [ -f "$p" ] && echo "$p"
+}
+
 send_macos_notification() {
   [ "$NOTIFY" = "0" ] && return
 
-  local sender
-  sender="$(terminal_bundle_id)"
+  local bundle icon
+  bundle="$(terminal_bundle_id)"
+  icon="$(claude_icon_path)"
 
-  # Prefer terminal-notifier: click focuses the terminal (not Script Editor).
+  # Prefer terminal-notifier. Notes on the flags below:
+  #   -contentImage <icns>  shows Claude's icon as the right-hand thumbnail.
+  #   -execute 'open -b …'  focuses the originating terminal app on click.
+  #                         No public deep link can target a specific Warp
+  #                         or iTerm2 tab today, so we just bring the app
+  #                         forward — the user lands on whichever tab was
+  #                         active.
+  #   -sender               intentionally NOT used: it relies on the legacy
+  #                         NSUserNotification API which is broken on macOS
+  #                         11+ (hangs the process and silently drops the
+  #                         notification).
+  # timeout 60: terminal-notifier stays alive while -execute is registered
+  # so it can fire on click. 60s covers banner-visibility window without
+  # leaving long-lived zombies.
   if command -v terminal-notifier &>/dev/null; then
-    terminal-notifier \
+    timeout 60 terminal-notifier \
       -title "claude-vibes" \
       -subtitle "$PROJECT_NAME" \
       -message "$EVENT_LABEL" \
-      ${sender:+-sender "$sender"} \
+      ${icon:+-contentImage "$icon"} \
+      ${bundle:+-execute "open -b $bundle"} \
       >/dev/null 2>&1 &
     return
   fi

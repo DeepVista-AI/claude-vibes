@@ -1,0 +1,25 @@
+{
+  "description": "Voice notifications, terminal tab flash, and macOS alerts on Claude Code events",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/play-random.sh done"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/on-notification.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -6,7 +6,7 @@
 # Example: play-random.sh done
 #
 # Environment variables:
-#   CLAUDE_VIBES_DIR       Override install directory (default: ~/.claude/vibes)
+#   CLAUDE_VIBES_DIR       Override sounds/scripts root (default: this plugin's root)
 #   CLAUDE_VIBES_FLASH     Enable/disable tab flash (default: 1)
 #   CLAUDE_VIBES_NOTIFY    Enable/disable macOS notifications (default: 1)
 #   CLAUDE_VIBES_PROJECT   Override auto-detected project name
@@ -14,7 +14,10 @@
 set -euo pipefail
 
 CATEGORY="${1:-done}"
-VIBES_DIR="${CLAUDE_VIBES_DIR:-$HOME/.claude/vibes}"
+# Resolve the vibes root relative to this script (scripts/ and sounds/ are
+# siblings), so it works wherever the plugin is installed. Overridable via env.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
+VIBES_DIR="${CLAUDE_VIBES_DIR:-$(dirname "$SCRIPT_DIR")}"
 SOUNDS_DIR="$VIBES_DIR/sounds/$CATEGORY"
 
 if [ ! -d "$SOUNDS_DIR" ]; then

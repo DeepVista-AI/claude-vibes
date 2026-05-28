@@ -29,8 +29,17 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    outputs:
+      prs: ${{ steps.release.outputs.prs }}
+      prs_created: ${{ steps.release.outputs.prs_created }}
     steps:
       - uses: googleapis/release-please-action@v4
+        id: release
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+          # Optional: set RELEASE_PLEASE_TOKEN (PAT or GitHub App token) so commits
+          # made by release-please trigger downstream workflows (e.g. CI on the
+          # release PR). Without it, GITHUB_TOKEN is used and downstream workflows
+          # do not run on bot-authored pushes.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}

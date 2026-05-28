@@ -1,10 +1,9 @@
 # claude-vibes
 
-Give your [Claude Code](https://docs.anthropic.com/en/docs/claude-code) a voice. Random witty British notifications when tasks finish, permissions are needed, or things go wrong.
+Give your [Claude Code](https://docs.claude.com/en/docs/claude-code) a voice. Random witty British notifications when tasks finish or when Claude needs your attention.
 
 > *"Mic drop. Task complete."*
 > *"Knock knock. Permission please."*
-> *"Plot twist. Something went wrong."*
 
 ## What it does
 
@@ -12,10 +11,11 @@ Give your [Claude Code](https://docs.anthropic.com/en/docs/claude-code) a voice.
 
 | Event | What happens |
 |-------|-------------|
-| **Task complete** | Random celebration: *"Ship it. We are golden."*, *"Done and dusted. Fancy a tea?"*, *"Piece of cake."* |
-| **Permission needed** | Polite nudge: *"Pretty please?"*, *"Boss, I need your approval."*, *"Ahem. Quick approval needed."* |
-| **Error** | Cheeky alert: *"Well, this is awkward."*, *"Houston, we have a problem."* |
-| **Notification** | Clean glass chime (macOS system sound) |
+| **Task complete** (`Stop` hook) | Random celebration: *"Ship it. We are golden."*, *"Done and dusted. Fancy a tea?"*, *"Piece of cake."* |
+| **Permission needed** (`Notification` hook, permission branch) | Polite nudge: *"Pretty please?"*, *"Boss, I need your approval."*, *"Ahem. Quick approval needed."* |
+| **Other notification** (`Notification` hook, default branch) | Clean glass chime (macOS system sound) — e.g. when Claude has been waiting idle for input |
+
+> Five "error" sound clips ship in `sounds/error/` and are listenable via `/vibes-preview error`, but Claude Code has no native "error" event today, so they aren't auto-triggered.
 
 Every event also **flashes your terminal tab** and sends a **macOS notification with the project name**, so you always know which Claude Code instance needs attention.
 
@@ -192,7 +192,7 @@ Or run `/plugin` inside Claude Code and disable/uninstall it from the menu. Sinc
 ## Requirements
 
 - macOS (uses `afplay` for audio playback)
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI
+- [Claude Code](https://docs.claude.com/en/docs/claude-code) CLI
 - For regenerating sounds: `OPENAI_API_KEY` + `uv` or `pip install openai`
 
 ## Sound credits

@@ -816,7 +816,7 @@
       <div class="how-card">
         <div class="how-num">3</div>
         <h3>Play</h3>
-        <p>Each hook triggers a script that picks a random <code>.mp3</code> from the matching category and plays it with <code>afplay</code>.</p>
+        <p>The plugin's hook scripts pick a random <code>.mp3</code> from the matching category and play it with <code>afplay</code>. The <code>Notification</code> hook is dispatched: a permission prompt plays a random <em>permission</em> voice, everything else plays the system glass chime.</p>
       </div>
     </div>
 
@@ -871,15 +871,15 @@
       <div class="customize-card">
         <div class="card-icon">&#127908;</div>
         <h3>Regenerate Sounds</h3>
-        <p>Regenerate all 26 clips with a different OpenAI TTS voice. Choose from alloy, echo, fable, nova, onyx, or shimmer.</p>
+        <p>Regenerate all 26 clips with a different OpenAI TTS voice from inside Claude Code. Choose from alloy, echo, fable, nova, onyx, or shimmer.</p>
         <div class="card-code"><span class="comment"># Change voice to nova</span>
-<span class="cmd">./scripts/generate-sounds.sh</span> <span class="str">nova</span></div>
+<span class="cmd">/vibes-regenerate</span> <span class="str">nova</span></div>
       </div>
       <div class="customize-card">
         <div class="card-icon">&#128172;</div>
         <h3>Live Speak</h3>
-        <p>Generate and play any phrase instantly. Great for testing custom messages or one-off celebrations.</p>
-        <div class="card-code"><span class="cmd">./scripts/live-speak.sh</span> <span class="str">"Deploy done. Champagne time."</span></div>
+        <p>Generate and play any phrase instantly from a slash command. Great for testing custom messages or one-off celebrations.</p>
+        <div class="card-code"><span class="cmd">/vibes-speak</span> <span class="str">Deploy done. Champagne time.</span></div>
       </div>
     </div>
   </div>

@@ -1,6 +1,6 @@
 {
   "name": "claude-vibes",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Give your Claude Code a voice. Witty British voice notifications, terminal tab flash, and macOS alerts when tasks finish, permissions are needed, or errors occur.",
   "author": {
     "name": "DeepVista AI",
@@ -9,5 +9,12 @@
   "homepage": "https://github.com/DeepVista-AI/claude-vibes",
   "repository": "https://github.com/DeepVista-AI/claude-vibes",
   "license": "MIT",
-  "keywords": ["notifications", "sounds", "voice", "tts", "hooks", "macos"]
+  "keywords": [
+    "notifications",
+    "sounds",
+    "voice",
+    "tts",
+    "hooks",
+    "macos"
+  ]
 }

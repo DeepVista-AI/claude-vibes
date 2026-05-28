@@ -23,51 +23,53 @@ Sounds are pre-generated with OpenAI TTS (fable voice -- British male). A random
 
 ## Quick start
 
-One command:
+claude-vibes is a [Claude Code plugin](https://docs.claude.com/en/docs/claude-code/plugins). Install it with two commands:
 
 ```bash
-curl -fsSL https://deepvista-ai.github.io/claude-vibes/install.sh | bash
+claude plugin marketplace add DeepVista-AI/claude-vibes
+claude plugin install claude-vibes@deepvista
 ```
 
-Or clone and install manually:
+Or from inside Claude Code, run `/plugin`, add the `DeepVista-AI/claude-vibes` marketplace, and install **claude-vibes** from the menu.
 
-```bash
-git clone https://github.com/DeepVista-AI/claude-vibes.git
-cd claude-vibes
-./install.sh
-```
-
-Restart Claude Code. That's it.
+That's it — the hooks activate immediately. No files are copied into `~/.claude` and no settings are edited; everything runs from the installed plugin directory.
 
 ## What's in the box
 
 ```
 claude-vibes/
+  .claude-plugin/
+    plugin.json          # Plugin manifest
+    marketplace.json     # Marketplace entry (so `claude plugin install` works)
+  hooks/
+    hooks.json           # Wires sounds + notifications to Claude Code events
+  commands/
+    vibes-preview.md     # /vibes-preview  — listen to all sounds
+    vibes-speak.md       # /vibes-speak    — live TTS of any phrase
+    vibes-regenerate.md  # /vibes-regenerate — rebuild sounds (change voice)
   sounds/
-    done/          # 15 task completion sounds
-    permission/    #  6 permission request sounds
-    error/         #  5 error notification sounds
+    done/                # 15 task completion sounds
+    permission/          #  6 permission request sounds
+    error/               #  5 error notification sounds
   scripts/
     play-random.sh       # Pick and play a random sound from a category
     notify.sh            # Tab flash + macOS notification with project context
     live-speak.sh        # Live-generate any phrase with OpenAI TTS
     generate-sounds.sh   # Regenerate all sounds (change voice, add phrases)
     preview.sh           # Listen to all sounds
-  install.sh             # One-command setup
-  uninstall.sh           # Clean removal
 ```
 
-## Preview sounds
+## Slash commands
 
-```bash
-# Listen to all sounds
-./scripts/preview.sh
+The plugin adds three commands inside Claude Code:
 
-# Listen to one category
-./scripts/preview.sh done
-./scripts/preview.sh permission
-./scripts/preview.sh error
-```
+| Command | What it does |
+|---------|-------------|
+| `/vibes-preview [done\|permission\|error]` | Play the sounds so you can hear them (defaults to all) |
+| `/vibes-speak <message>` | Speak any phrase live with OpenAI TTS |
+| `/vibes-regenerate [voice]` | Rebuild every sound with a chosen TTS voice |
+
+`/vibes-speak` and `/vibes-regenerate` require `OPENAI_API_KEY` and either `uv` or `pip install openai`.
 
 ## Multi-instance support
 
@@ -94,43 +96,36 @@ export CLAUDE_VIBES_NOTIFY=0   # No macOS notifications
 
 ### Change the voice
 
-Regenerate all sounds with a different OpenAI TTS voice:
+Regenerate all sounds with a different OpenAI TTS voice — from inside Claude Code:
 
-```bash
-# Voices: alloy, echo, fable, nova, onyx, shimmer
-./scripts/generate-sounds.sh nova
+```
+/vibes-regenerate nova
 ```
 
-> Requires `OPENAI_API_KEY` and either `uv` or `pip install openai`.
+> Voices: alloy, echo, fable, nova, onyx, shimmer. Requires `OPENAI_API_KEY` and either `uv` or `pip install openai`.
 
 ### Add your own phrases
 
-Edit `scripts/generate-sounds.sh` and add lines:
+The sound list lives in `scripts/generate-sounds.sh`. Add lines:
 
 ```bash
 generate done done_coffee "Coffee break earned. Task complete."
 generate permission perm_hey "Hey, quick question for you."
 ```
 
-Then run `./scripts/generate-sounds.sh` to regenerate.
+Then run `/vibes-regenerate` to rebuild the `.mp3` files.
 
 ### Live TTS
 
-Generate any phrase on the fly:
+Speak any phrase on the fly:
 
-```bash
-./scripts/live-speak.sh "Deploy successful. Time for champagne."
 ```
-
-Set a custom voice:
-
-```bash
-CLAUDE_VIBES_VOICE=nova ./scripts/live-speak.sh "All systems go."
+/vibes-speak Deploy successful. Time for champagne.
 ```
 
 ### Use macOS system voices instead
 
-Don't want to use OpenAI? Replace the hook commands in `~/.claude/settings.json`:
+Don't want to use OpenAI? Override the plugin hooks in your `~/.claude/settings.json` (user hooks merge with plugin hooks):
 
 ```json
 {
@@ -153,11 +148,9 @@ Download premium voices in **System Settings > Accessibility > Spoken Content > 
 
 ## How it works
 
-Claude Code supports [hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) -- shell commands that run on events like `Stop` (task finished), `PermissionRequest`, and `Notification`.
+Claude Code supports [hooks](https://docs.claude.com/en/docs/claude-code/hooks) -- shell commands that run on events like `Stop` (task finished) and `Notification`. As a [plugin](https://docs.claude.com/en/docs/claude-code/plugins), claude-vibes ships its hooks in `hooks/hooks.json` and Claude Code registers them automatically when the plugin is enabled — nothing is written to your `settings.json`.
 
-claude-vibes installs a `play-random.sh` script that picks a random `.mp3` from the appropriate category folder and plays it with `afplay` (built into macOS).
-
-The hook configuration goes into `~/.claude/settings.json`:
+`play-random.sh` picks a random `.mp3` from the matching category folder and plays it with `afplay` (built into macOS). `${CLAUDE_PLUGIN_ROOT}` resolves to wherever the plugin is installed, so the paths stay portable:
 
 ```json
 {
@@ -167,17 +160,7 @@ The hook configuration goes into `~/.claude/settings.json`:
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/vibes/scripts/play-random.sh done"
-          }
-        ]
-      }
-    ],
-    "PermissionRequest": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/vibes/scripts/play-random.sh permission"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/play-random.sh done"
           }
         ]
       }
@@ -187,7 +170,7 @@ The hook configuration goes into `~/.claude/settings.json`:
         "hooks": [
           {
             "type": "command",
-            "command": "afplay /System/Library/Sounds/Glass.aiff &"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/on-notification.sh"
           }
         ]
       }
@@ -196,13 +179,15 @@ The hook configuration goes into `~/.claude/settings.json`:
 }
 ```
 
+Claude Code has no dedicated "permission" hook event — permission prompts arrive through `Notification`. So `on-notification.sh` reads the notification message and branches: a permission prompt plays a random *permission* voice, anything else plays the glass chime. Both flash the terminal tab and post a macOS notification with the project name.
+
 ## Uninstall
 
 ```bash
-./uninstall.sh
+claude plugin uninstall claude-vibes@deepvista
 ```
 
-Removes `~/.claude/vibes/` and cleans hooks from `~/.claude/settings.json`.
+Or run `/plugin` inside Claude Code and disable/uninstall it from the menu. Since the plugin never touches `~/.claude/settings.json`, removing it leaves no trace.
 
 ## Requirements
 

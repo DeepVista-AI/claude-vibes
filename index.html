@@ -770,7 +770,7 @@
 
     <div class="install-wrapper">
       <div class="install-block" onclick="copyInstall()" title="Click to copy">
-        <code>curl -fsSL https://deepvista-ai.github.io/claude-vibes/install.sh | bash</code>
+        <code>claude plugin marketplace add DeepVista-AI/claude-vibes &amp;&amp; claude plugin install claude-vibes@deepvista</code>
       </div>
       <span class="install-hint">click to copy</span>
     </div>
@@ -806,12 +806,12 @@
       <div class="how-card">
         <div class="how-num">1</div>
         <h3>Install</h3>
-        <p>One command copies 26 sound files to <code>~/.claude/vibes</code> and registers hooks in Claude Code's <code>settings.json</code>.</p>
+        <p>Install the plugin with <code>claude plugin install</code> (or the <code>/plugin</code> menu). Its hooks register automatically — nothing is copied into <code>~/.claude</code> and your <code>settings.json</code> is left untouched.</p>
       </div>
       <div class="how-card">
         <div class="how-num">2</div>
         <h3>Hook</h3>
-        <p>Claude Code fires <code>Stop</code>, <code>PermissionRequest</code>, and <code>Notification</code> events as it works.</p>
+        <p>Claude Code fires <code>Stop</code> and <code>Notification</code> events as it works — including when it needs your permission.</p>
       </div>
       <div class="how-card">
         <div class="how-num">3</div>
@@ -1014,7 +1014,7 @@ function switchTab(tab) {
 }
 
 function copyInstall() {
-  navigator.clipboard.writeText("curl -fsSL https://deepvista-ai.github.io/claude-vibes/install.sh | bash");
+  navigator.clipboard.writeText("claude plugin marketplace add DeepVista-AI/claude-vibes && claude plugin install claude-vibes@deepvista");
   const toast = document.getElementById("toast");
   toast.classList.add("show");
   setTimeout(() => toast.classList.remove("show"), 2000);

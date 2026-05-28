@@ -1,0 +1,19 @@
+{
+  "name": "deepvista",
+  "owner": {
+    "name": "DeepVista AI",
+    "url": "https://github.com/DeepVista-AI"
+  },
+  "metadata": {
+    "description": "Claude Code plugins from DeepVista AI",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "claude-vibes",
+      "source": "./",
+      "description": "Give your Claude Code a voice. Witty British voice notifications, terminal tab flash, and macOS alerts when tasks finish, permissions are needed, or errors occur.",
+      "version": "1.0.0"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+name: release-please
+
+# Runs Google's release-please on every push to main.
+#
+# How it works:
+#   1. release-please scans new commits since the last release tag.
+#   2. If any are conventional commits (feat:, fix:, feat!:, etc.), it opens
+#      or updates a "release PR" that bumps the version + writes CHANGELOG.md.
+#   3. Merging that release PR cuts a git tag (vX.Y.Z) and a GitHub Release.
+#
+# What gets bumped:
+#   - .release-please-manifest.json  (release-please's own state)
+#   - .claude-plugin/plugin.json     (version field)
+#   - .claude-plugin/marketplace.json (metadata.version + plugins[0].version)
+#   - CHANGELOG.md (created / appended)
+#
+# After a tag is cut, users running `claude plugin update` see the new
+# version advertised by the marketplace and pull it on their next update.
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
